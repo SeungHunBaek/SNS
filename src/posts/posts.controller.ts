@@ -11,57 +11,18 @@ import {
 import { PostsService } from './posts.service';
 import { NotFoundError } from 'rxjs';
 
-interface PostModel {
-  id: number;
-  author: string;
-  title: string;
-  content: string;
-  likeCount: number;
-  commentCount: number;
-}
-
-let posts: PostModel[] = [
-  {
-    id: 1,
-    author: 'newJeans',
-    title: '민지',
-    content: '노래하는 민자',
-    likeCount: 2313,
-    commentCount: 132,
-  },
-  {
-    id: 2,
-    author: 'random',
-    title: '민',
-    content: '노래하는 민자',
-    likeCount: 23,
-    commentCount: 1,
-  },
-  {
-    id: 3,
-    author: 'nens',
-    title: '지',
-    content: '노래하는 민자',
-    likeCount: 1,
-    commentCount: 0,
-  },
-];
-
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Get()
-  getPosts(): PostModel[] {
-    return posts;
+  getPosts() {
+    return this.postsService.getAllPosts();
   }
 
   @Get(':id')
-  getPost(@Param('id') id: string): PostModel {
-    const post: PostModel = posts.find((post) => post.id === +id);
-    if (!post) throw new NotFoundException();
-
-    return post;
+  getPost(@Param('id') id: string) {
+    return this.postsService.getPostById(+id);
   }
 
   @Post()
@@ -69,19 +30,8 @@ export class PostsController {
     @Body('author') author: string,
     @Body('title') title: string,
     @Body('content') content: string,
-  ): PostModel {
-    const post: PostModel = {
-      id: posts[posts.length - 1].id + 1,
-      author,
-      title,
-      content,
-      likeCount: 0,
-      commentCount: 0,
-    };
-
-    posts = [...posts, post];
-
-    return post;
+  ) {
+    return this.postsService.createPost(author, title, content);
   }
 
   @Put(':id')
@@ -90,25 +40,12 @@ export class PostsController {
     @Body('author') author?: string,
     @Body('title') title?: string,
     @Body('content') content?: string,
-  ): PostModel {
-    const post = posts.find((post) => post.id === +id);
-    if (!post) throw new NotFoundException();
-
-    if (author) post.author = author;
-    if (title) post.title = title;
-    if (content) post.content = content;
-
-    posts = posts.map((prevPost) => (prevPost.id === +id ? post : prevPost));
-
-    return post;
+  ) {
+    return this.postsService.updatePost(+id, author, title, content);
   }
 
   @Delete(':id')
-  deletePost(@Param('id') id: string): PostModel[] {
-    const post: PostModel = posts.find((post) => post.id === +id);
-    if (!post) throw new NotFoundException();
-
-    posts = posts.filter((_post) => _post.id !== +id);
-    return posts;
+  deletePost(@Param('id') id: string) {
+    return this.postsService.deletePost(+id);
   }
 }
