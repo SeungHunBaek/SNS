@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersModel } from 'src/users/entities/users.entity';
-import { JWT_SECRET } from './const/auth.const';
+import { HASH_ROUNDS, JWT_SECRET } from './const/auth.const';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 
@@ -79,7 +79,7 @@ export class AuthService {
      * 2)기존해쉬
      */
     const passOk = await bcrypt.compare(user.password, existingUser.password);
-    if (passOk) {
+    if (!passOk) {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
     }
 
@@ -90,5 +90,18 @@ export class AuthService {
     const existingUser = await this.authenticateWithEmailAndPassword(user);
 
     return this.loginUser(existingUser);
+  }
+
+  async registerWithEmail(
+    user: Pick<UsersModel, 'nickname' | 'email' | 'password'>,
+  ) {
+    const hash = await bcrypt.hash(user.password, HASH_ROUNDS);
+
+    const newUser = await this.usersService.createUser({
+      ...user,
+      password: hash,
+    });
+
+    return this.loginUser(newUser);
   }
 }
